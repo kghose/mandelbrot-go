@@ -8,6 +8,7 @@ import (
 )
 
 type UI struct {
+	view_port   ViewPort
 	window      *glfw.Window
 	texture     uint32
 	framebuffer uint32
@@ -15,7 +16,7 @@ type UI struct {
 
 func (ui *UI) init() {
 	var err error
-	ui.window, err = glfw.CreateWindow(640, 480, "My Window", nil, nil)
+	ui.window, err = glfw.CreateWindow(1000, 700, "Mandelbrot Set", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -52,36 +53,32 @@ func (ui *UI) init() {
 
 func (ui *UI) draw_loop(mandelbrot_set MathematicalObject) {
 
+	drag_event := DragEvent{}
+	ui.window.SetCursorPosCallback(drag_event.cursor_pos_callback)
+	ui.window.SetMouseButtonCallback(drag_event.mouse_button_callback)
+
 	W, H := ui.window.GetSize()
-	existing_viewport := ViewPort{W, H, -2.0, -1.0, 1.0, -1.0 + 3.0*float64(H)/float64(W)}
-	new_viewport := ViewPort{}
+	DY := float64(H) / float64(W)
+	ui.view_port = ViewPort{W, H, -2.5, -1.0 * DY, 1.0, 1.0 * DY}
 
 	for !ui.window.ShouldClose() {
 
-		new_viewport.W, new_viewport.H = ui.window.GetSize()
-		new_viewport.x0, new_viewport.y0 = existing_viewport.x0, existing_viewport.y0
-		dx := (existing_viewport.x1 - existing_viewport.x0) / float64(existing_viewport.W)
+		if drag_event.drag_complete {
+			ui.view_port = drag_event.new_viewport(ui.view_port)
+			drag_event.mark_done()
+		}
+		ui.draw_object(mandelbrot_set)
 
-		new_viewport.x1 = new_viewport.x0 + dx*float64(new_viewport.W)
-		new_viewport.y1 = new_viewport.y0 + dx*float64(new_viewport.H)
+		if drag_event.dragging {
+			ui.draw_drag(drag_event)
+		}
 
-		gl.BindTexture(gl.TEXTURE_2D, ui.texture)
-		gl.TexImage2D(
-			gl.TEXTURE_2D, 0, gl.RGBA8,
-			int32(new_viewport.W), int32(new_viewport.H),
-			0, gl.RGBA, gl.UNSIGNED_BYTE,
-			gl.Ptr(mandelbrot_set.update(new_viewport).Pix),
-		)
-		gl.BlitFramebuffer(
-			0, 0,
-			int32(new_viewport.W), int32(new_viewport.H),
-			0, 0,
-			int32(new_viewport.W), int32(new_viewport.H),
-			gl.COLOR_BUFFER_BIT, gl.LINEAR,
-		)
-
-		new_viewport = mandelbrot_set.true_viewport()
-		ui.window.SetTitle(fmt.Sprintf("(%f, %f) - (%f, %f)", new_viewport.x0, new_viewport.y0, new_viewport.x1, new_viewport.y1))
+		ui.window.SetTitle(
+			fmt.Sprintf(
+				"Mandelbrot Set: (%f, %f) - (%f, %f) %d x %d",
+				ui.view_port.x0, ui.view_port.y0,
+				ui.view_port.x1, ui.view_port.y1,
+				ui.view_port.W, ui.view_port.H))
 
 		ui.window.SwapBuffers()
 		glfw.PollEvents()
@@ -89,8 +86,152 @@ func (ui *UI) draw_loop(mandelbrot_set MathematicalObject) {
 
 }
 
-// We choose to normalize on the x-axis
-func (v *ViewPort) normalize() {
-	dx := (v.x1 - v.x0) / float64(v.W)
-	v.y1 = v.y0 + dx*float64(v.H)
+func (ui *UI) draw_object(mandelbrot_set MathematicalObject) {
+
+	ui.view_port.W, ui.view_port.H = ui.window.GetSize()
+	dx := (ui.view_port.x1 - ui.view_port.x0) / float64(ui.view_port.W)
+	cy := (ui.view_port.y1 + ui.view_port.y0) / 2.0
+	ui.view_port.y0 = cy - 0.5*dx*float64(ui.view_port.H)
+	ui.view_port.y1 = cy + 0.5*dx*float64(ui.view_port.H)
+
+	gl.BindTexture(gl.TEXTURE_2D, ui.texture)
+	gl.TexImage2D(
+		gl.TEXTURE_2D, 0, gl.RGBA8,
+		int32(ui.view_port.W), int32(ui.view_port.H),
+		0, gl.RGBA, gl.UNSIGNED_BYTE,
+		gl.Ptr(mandelbrot_set.update(ui.view_port).Pix),
+	)
+	gl.BlitFramebuffer(
+		0, 0,
+		int32(ui.view_port.W), int32(ui.view_port.H),
+		0, 0,
+		int32(ui.view_port.W), int32(ui.view_port.H),
+		gl.COLOR_BUFFER_BIT, gl.LINEAR,
+	)
+
+}
+
+// https://stackoverflow.com/a/21451101
+func (ui *UI) draw_drag(de DragEvent) {
+	w0, h0, w1, h1 := de.normalize_drag_rect(ui.view_port)
+
+	gl.Color3f(1.0, 1.0, 0.0)
+	gl.LineWidth(5.0)
+
+	gl.PushMatrix()
+	gl.MatrixMode(gl.PROJECTION)
+	gl.LoadIdentity()
+	gl.Ortho(0, float64(ui.view_port.W), 0, float64(ui.view_port.H), -1.0, 1.0)
+	gl.Viewport(0, 0, int32(ui.view_port.W), int32(ui.view_port.H))
+	gl.Begin(gl.LINE_LOOP)
+	gl.Vertex2d(w0, h0)
+	gl.Vertex2d(w1, h0)
+	gl.Vertex2d(w1, h1)
+	gl.Vertex2d(w0, h1)
+	gl.End()
+	gl.PopMatrix()
+}
+
+type DragEvent struct {
+	dragging      bool
+	drag_complete bool
+	win_x0,
+	win_y0,
+	win_x1,
+	win_y1 float64
+}
+
+func (de *DragEvent) cursor_pos_callback(w *glfw.Window, xpos float64, ypos float64) {
+	// The end of the drag should always be where our cursor is
+	de.win_x1 = xpos
+	de.win_y1 = ypos
+
+	// The start of the drag should be where our cursor is if we are not
+	// already in the middle of a drag
+	if !de.dragging {
+		de.win_x0 = xpos
+		de.win_y0 = ypos
+	}
+}
+
+func (de *DragEvent) mouse_button_callback(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+	if action == glfw.Press {
+		if !de.dragging {
+			de.dragging = true
+		}
+	}
+	if action == glfw.Release {
+		if de.dragging {
+			de.drag_complete = true
+		}
+	}
+}
+
+func (de *DragEvent) mark_done() {
+	de.dragging = false
+	de.drag_complete = false
+}
+
+func (de *DragEvent) normalize_drag_rect(vp ViewPort) (w0 float64, h0 float64, w1 float64, h1 float64) {
+
+	if de.win_x0 < de.win_x1 {
+		w0 = de.win_x0
+		w1 = de.win_x1
+	} else {
+		w0 = de.win_x1
+		w1 = de.win_x0
+	}
+
+	// mouse Y pos reference is top of window
+	de.win_y0 = float64(vp.H) - de.win_y0
+	de.win_y1 = float64(vp.H) - de.win_y1
+
+	if de.win_y0 < de.win_y1 {
+		h0 = de.win_y0
+		h1 = de.win_y1
+	} else {
+		h0 = de.win_y1
+		h1 = de.win_y0
+	}
+
+	dw := w1 - w0
+	dh := h1 - h0
+
+	wr := dw / float64(vp.W)
+	hr := dh / float64(vp.H)
+
+	if wr < hr {
+		cw := (w0 + w1) / 2.0
+		w0 = cw - 0.5*hr*float64(vp.W)
+		w1 = cw + 0.5*hr*float64(vp.W)
+	} else {
+		ch := (h0 + h1) / 2.0
+		h0 = ch - 0.5*wr*float64(vp.H)
+		h1 = ch + 0.5*wr*float64(vp.H)
+
+	}
+
+	return w0, h0, w1, h1
+}
+
+func (de *DragEvent) new_viewport(vp ViewPort) ViewPort {
+
+	w0, h0, w1, h1 := de.normalize_drag_rect(vp)
+	dx := (vp.x1 - vp.x0) / float64(vp.W)
+	dy := (vp.y1 - vp.y0) / float64(vp.H)
+
+	new_x0 := vp.x0 + dx*w0
+	new_x1 := vp.x0 + dx*w1
+	new_y0 := vp.y0 + dy*h0
+	new_y1 := vp.y0 + dy*h1
+
+	return ViewPort{
+		vp.W,
+		vp.H,
+		new_x0,
+		new_y0,
+		new_x1,
+		new_y1,
+	}
+
 }

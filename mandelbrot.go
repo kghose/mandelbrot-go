@@ -5,17 +5,6 @@ import (
 	"image/color"
 )
 
-/*
-Physical viewport to mathematical viewport:
-
-Physical viewport:          L, W
-Mathematical viewport:      x, y, x+kL, y+kW
-Initial scaling factor k = .01
-Initial physical viewport L = 400, W = 400
-Initial mathematical viewport x = -2, y = -2
-
-*/
-
 func (existing_view ViewPort) same_as(new_view ViewPort) bool {
 	return (existing_view.x0 == new_view.x0) &&
 		(existing_view.y0 == new_view.y0) &&
