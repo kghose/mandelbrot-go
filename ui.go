@@ -56,6 +56,7 @@ func (ui *UI) draw_loop(mandelbrot_set MathematicalObject) {
 	drag_event := DragEvent{}
 	ui.window.SetCursorPosCallback(drag_event.cursor_pos_callback)
 	ui.window.SetMouseButtonCallback(drag_event.mouse_button_callback)
+	ui.window.SetScrollCallback(ui.scroll_callback)
 
 	W, H := ui.window.GetSize()
 	DY := float64(H) / float64(W)
@@ -130,6 +131,13 @@ func (ui *UI) draw_drag(de DragEvent) {
 	gl.Vertex2d(w0, h1)
 	gl.End()
 	gl.PopMatrix()
+}
+
+func (ui *UI) scroll_callback(w *glfw.Window, xoff float64, yoff float64) {
+	ui.view_port.x0 -= xoff * (ui.view_port.x1 - ui.view_port.x0) * 0.01
+	ui.view_port.x1 -= xoff * (ui.view_port.x1 - ui.view_port.x0) * 0.01
+	ui.view_port.y0 += yoff * (ui.view_port.y1 - ui.view_port.y0) * 0.01
+	ui.view_port.y1 += yoff * (ui.view_port.y1 - ui.view_port.y0) * 0.01
 }
 
 type DragEvent struct {

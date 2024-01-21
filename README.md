@@ -6,6 +6,7 @@
 
 I used this to learn `golang`
 
-1. Methods
-2. Interfaces
-3. Parallelism (TODO)
+- [x] Methods
+- [x] Interfaces
+- [ ] Profiling
+- [ ] Parallelism
