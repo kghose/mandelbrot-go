@@ -9,6 +9,7 @@ import (
 
 type UI struct {
 	view_port   ViewPort
+	drag_event  DragEvent
 	window      *glfw.Window
 	texture     uint32
 	framebuffer uint32
@@ -49,14 +50,14 @@ func (ui *UI) init() {
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, 0)
 	}
 
+	ui.drag_event = DragEvent{}
+	ui.window.SetCursorPosCallback(ui.drag_event.cursor_pos_callback)
+	ui.window.SetMouseButtonCallback(ui.drag_event.mouse_button_callback)
+	ui.window.SetScrollCallback(ui.scroll_callback)
+
 }
 
 func (ui *UI) draw_loop(mandelbrot_set MathematicalObject) {
-
-	drag_event := DragEvent{}
-	ui.window.SetCursorPosCallback(drag_event.cursor_pos_callback)
-	ui.window.SetMouseButtonCallback(drag_event.mouse_button_callback)
-	ui.window.SetScrollCallback(ui.scroll_callback)
 
 	W, H := ui.window.GetSize()
 	DY := float64(H) / float64(W)
@@ -64,14 +65,14 @@ func (ui *UI) draw_loop(mandelbrot_set MathematicalObject) {
 
 	for !ui.window.ShouldClose() {
 
-		if drag_event.drag_complete {
-			ui.view_port = drag_event.new_viewport(ui.view_port)
-			drag_event.mark_done()
+		if ui.drag_event.drag_complete {
+			ui.view_port = ui.drag_event.new_viewport(ui.view_port)
+			ui.drag_event.mark_done()
 		}
 		ui.draw_object(mandelbrot_set)
 
-		if drag_event.dragging {
-			ui.draw_drag(drag_event)
+		if ui.drag_event.dragging {
+			ui.draw_drag()
 		}
 
 		ui.window.SetTitle(
@@ -113,8 +114,8 @@ func (ui *UI) draw_object(mandelbrot_set MathematicalObject) {
 }
 
 // https://stackoverflow.com/a/21451101
-func (ui *UI) draw_drag(de DragEvent) {
-	w0, h0, w1, h1 := de.normalize_drag_rect(ui.view_port)
+func (ui *UI) draw_drag() {
+	w0, h0, w1, h1 := ui.drag_event.normalize_drag_rect(ui.view_port)
 
 	gl.Color3f(1.0, 1.0, 0.0)
 	gl.LineWidth(5.0)
@@ -182,24 +183,19 @@ func (de *DragEvent) mark_done() {
 
 func (de *DragEvent) normalize_drag_rect(vp ViewPort) (w0 float64, h0 float64, w1 float64, h1 float64) {
 
-	if de.win_x0 < de.win_x1 {
-		w0 = de.win_x0
-		w1 = de.win_x1
-	} else {
-		w0 = de.win_x1
-		w1 = de.win_x0
+	w0 = de.win_x0
+	w1 = de.win_x1
+
+	if w0 > w1 {
+		w0, w1 = w1, w0
 	}
 
 	// mouse Y pos reference is top of window
-	de.win_y0 = float64(vp.H) - de.win_y0
-	de.win_y1 = float64(vp.H) - de.win_y1
+	h0 = float64(vp.H) - de.win_y0
+	h1 = float64(vp.H) - de.win_y1
 
-	if de.win_y0 < de.win_y1 {
-		h0 = de.win_y0
-		h1 = de.win_y1
-	} else {
-		h0 = de.win_y1
-		h1 = de.win_y0
+	if h0 > h1 {
+		h0, h1 = h1, h0
 	}
 
 	dw := w1 - w0
@@ -216,7 +212,6 @@ func (de *DragEvent) normalize_drag_rect(vp ViewPort) (w0 float64, h0 float64, w
 		ch := (h0 + h1) / 2.0
 		h0 = ch - 0.5*wr*float64(vp.H)
 		h1 = ch + 0.5*wr*float64(vp.H)
-
 	}
 
 	return w0, h0, w1, h1
