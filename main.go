@@ -4,6 +4,8 @@ import (
 	"runtime"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/kghose/mandelbrot-go/math"
+	"github.com/kghose/mandelbrot-go/ui"
 )
 
 func init() {
@@ -20,10 +22,10 @@ func main() {
 	}
 	defer glfw.Terminate()
 
-	ui := UI{}
-	ui.init()
-	mandelbrot_set := MandelbrotSet{}
-	mandelbrot_set.max_iter = 1000
-	ui.draw_loop(&mandelbrot_set)
+	mandel_ui := ui.UI{}
+	mandel_ui.Init()
+	mandelbrot_set := math.MandelbrotSet{}
+	mandelbrot_set.Max_iter = 1000
+	mandel_ui.Draw_loop(&mandelbrot_set)
 
 }
