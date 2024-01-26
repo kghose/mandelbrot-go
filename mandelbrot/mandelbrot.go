@@ -44,13 +44,14 @@ func (mandel *MandelbrotSet) Compute(new_view math.MathView, new_win math.Window
 
 func escape_number(x0 float64, y0 float64, max_iter int) uint16 {
 	col_scale := float64(0xffff) / float64(max_iter)
-	x := 0.0
-	y := 0.0
+	x, x_2 := 0.0, 0.0
+	y, y_2 := 0.0, 0.0
 	for i := 0; i < max_iter; i++ {
-		xtemp := x*x - y*y + x0
+		x_2, y_2 = x*x, y*y
+		xtemp := x_2 - y_2 + x0
 		y = 2*x*y + y0
 		x = xtemp
-		if x*x+y*y >= 4.0 {
+		if x_2+y_2 >= 4.0 {
 			return uint16((max_iter - i) * int(col_scale))
 		}
 	}
