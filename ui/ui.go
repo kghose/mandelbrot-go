@@ -66,6 +66,10 @@ func (ui *UI) Draw_loop(mandelbrot_set math.MathematicalObject) {
 
 	for !ui.window.ShouldClose() {
 
+		W, H := ui.window.GetSize()
+		win := math.Window{W: W, H: H}
+		ui.view = ui.view.Fix_aspect(win)
+
 		if ui.zoom_event.drag_complete {
 			ui.view = ui.ZoomedView(win)
 			ui.zoom_event.mark_done()
@@ -90,12 +94,6 @@ func (ui *UI) Draw_loop(mandelbrot_set math.MathematicalObject) {
 }
 
 func (ui *UI) draw_object(mandelbrot_set math.MathematicalObject) {
-
-	// ui.view_port.W, ui.view_port.H = ui.window.GetSize()
-	// dx := (ui.view_port.x1 - ui.view_port.x0) / float64(ui.view_port.W)
-	// cy := (ui.view_port.y1 + ui.view_port.y0) / 2.0
-	// ui.view_port.y0 = cy - 0.5*dx*float64(ui.view_port.H)
-	// ui.view_port.y1 = cy + 0.5*dx*float64(ui.view_port.H)
 
 	W, H := ui.window.GetSize()
 	win := math.Window{W: W, H: H}
@@ -126,7 +124,7 @@ func (ui *UI) draw_drag() {
 	win := math.Window{W: W, H: H}
 	selection := ui.zoom_event.AspectCorrectedSelection(win)
 
-	gl.Color3f(1.0, 1.0, 0.0)
+	gl.Color3f(0.0, 1.0, 1.0)
 	gl.LineWidth(5.0)
 
 	gl.PushMatrix()
