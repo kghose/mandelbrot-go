@@ -14,13 +14,13 @@ I used this to learn `golang`
     - [ ] Stopping goroutines
     - [ ] Writing to a shared array
     - [ ] Data races
+- [ ] Benchmarking
 
 Because I got nerdsniped into visualizing mathematical objects
 
 - [ ] Mandelbrot set
     - [ ] (Stretch) With parallelization, symmetry and boundary tracing
 - [ ] [Ulam spiral](https://en.wikipedia.org/wiki/Ulam_spiral)
-- [ ] 
 
 # Notes
 

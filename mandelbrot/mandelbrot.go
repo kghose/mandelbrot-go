@@ -1,13 +1,15 @@
-package math
+package mandelbrot
 
 import (
 	"image"
 	"image/color"
+
+	"github.com/kghose/mandelbrot-go/math"
 )
 
 type MandelbrotSet struct {
-	view     MathView
-	win      Window
+	view     math.MathView
+	win      math.Window
 	Max_iter int
 	img      *image.RGBA
 }
@@ -16,7 +18,7 @@ func (mandel *MandelbrotSet) Image() *image.RGBA {
 	return mandel.img
 }
 
-func (mandel *MandelbrotSet) Compute(new_view MathView, new_win Window) {
+func (mandel *MandelbrotSet) Compute(new_view math.MathView, new_win math.Window) {
 
 	if mandel.view.Same_as(new_view) && mandel.win.Same_as(new_win) {
 		return
