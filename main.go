@@ -24,8 +24,7 @@ func main() {
 
 	mandel_ui := ui.UI{}
 	mandel_ui.Init()
-	mandelbrot_set := mandelbrot.MandelbrotSet{}
-	mandelbrot_set.Max_iter = 1000
+	mandelbrot_set := mandelbrot.MandelbrotSet{Max_iter: 1000}
 	mandel_ui.Draw_loop(&mandelbrot_set)
 
 }

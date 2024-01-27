@@ -1,6 +1,7 @@
 # Mandelbrot Set viewer in `golang`
 
-![](ss.png)
+[![](ss.png)](https://youtu.be/cFiIzbs1vqc)
+_Click to run screencast._
 
 `go run .`
 
@@ -8,13 +9,13 @@ I used this to learn `golang`
 
 - [x] Methods
 - [x] Interfaces
-- [ ] Generics
-- [ ] Profiling
-- [ ] Parallelism
+- [x] Generics
+- [x] Profiling
+- [x] Parallelism
     - [ ] Stopping goroutines
-    - [ ] Writing to a shared array
+    - [x] Writing to a shared array
     - [ ] Data races
-- [ ] Benchmarking
+- [x] Benchmarking
 
 Because I got nerdsniped into visualizing mathematical objects
 
