@@ -24,6 +24,12 @@ Because I got nerdsniped into visualizing mathematical objects
 
 # Notes
 
+## Profiling
+
+From https://go.dev/blog/pprof it sounded like a benchmark test and the
+-cpuprofile and -memprofile
+
+
 ## Interfaces and private methods
 
 Allowing private method declarations on interfaces is a waste ...

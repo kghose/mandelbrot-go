@@ -3,6 +3,7 @@ package mandelbrot
 import (
 	"image"
 	"image/color"
+	"sync"
 
 	"github.com/kghose/mandelbrot-go/math"
 )
@@ -34,12 +35,20 @@ func (mandel *MandelbrotSet) Compute(new_view math.MathView, new_win math.Window
 	dx := (mandel.view.X1 - x0) / float64(mandel.win.W)
 	dy := (mandel.view.Y1 - y0) / float64(mandel.win.H)
 
+	wg := sync.WaitGroup{}
 	for i := 0; i < mandel.win.W; i++ {
-		for j := 0; j < mandel.win.H; j++ {
-			k := escape_number(x0+dx*float64(i), y0+dy*float64(j), mandel.Max_iter)
-			mandel.img.Set(i, j, color.Gray16{k})
-		}
+		wg.Add(1)
+		go mandel.compute_column(i, x0, y0, dx, dy, &wg)
 	}
+	wg.Wait()
+}
+
+func (mandel *MandelbrotSet) compute_column(i int, x0 float64, y0 float64, dx float64, dy float64, wg *sync.WaitGroup) {
+	for j := 0; j < mandel.win.H; j++ {
+		k := escape_number(x0+dx*float64(i), y0+dy*float64(j), mandel.Max_iter)
+		mandel.img.Set(i, j, color.Gray16{k})
+	}
+	wg.Done()
 }
 
 func escape_number(x0 float64, y0 float64, max_iter int) uint16 {
