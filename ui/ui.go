@@ -142,11 +142,13 @@ func (ui *UI) draw_drag() {
 }
 
 func (ui *UI) scroll_callback(w *glfw.Window, xoff float64, yoff float64) {
-	W, H := ui.window.GetSize()
-	ui.view.X0 -= xoff * float64(W) * 0.01
-	ui.view.X1 -= xoff * float64(W) * 0.01
-	ui.view.Y0 += yoff * float64(H) * 0.01
-	ui.view.Y1 += yoff * float64(H) * 0.01
+	dx := ui.view.X1 - ui.view.X0
+	dy := ui.view.Y1 - ui.view.Y0
+
+	ui.view.X0 -= xoff * dx * 0.01
+	ui.view.X1 -= xoff * dx * 0.01
+	ui.view.Y0 += yoff * dy * 0.01
+	ui.view.Y1 += yoff * dy * 0.01
 }
 
 func (ui *UI) ZoomedView(win math.Window) math.MathView {
