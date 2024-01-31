@@ -124,8 +124,8 @@ func (ui *UI) draw_drag() {
 	win := math.Window{W: W, H: H}
 	selection := ui.zoom_event.AspectCorrectedSelection(win)
 
-	gl.Color3f(0.0, 1.0, 1.0)
-	gl.LineWidth(5.0)
+	gl.Color3f(1.0, 0.2, 0.2)
+	gl.LineWidth(2.0)
 
 	gl.PushMatrix()
 	gl.MatrixMode(gl.PROJECTION)
